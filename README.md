@@ -55,6 +55,80 @@ Any developer intending to use the materials in this repository should first tho
 *  [MEF 81 Draft (R3): Product Inventory Management](documentation/MEF%2081%20Draft%20(R3)%20-%20Product%20Inventory%20Management.pdf)
 *  [MEF 57.1: Ethernet Ordering Technical Standard - Business Requirements and Use Cases](documentation/MEF%2057.1%20-%20Ethernet%20Ordering%20Technical%20Specification%20-%20Business%20Requirements%20and%20Use%20Cases.pdf) This document is a ratified MEF standard.
 
+## Tool support
+
+MEF provides a convenient mechanism to automatically generate code bindings for Sonata POQ. The tool is containerized thus can be easily used at any machine with support for docker-based containerization.
+
+### Build the image from definition 
+The docker image use a [simple tool](https://github.com/bartoszm/codegen-wrapper) that in essence is an openAPI codegen with extensions that allow user to dynamically binding of API and product spec definitions.
+First step in the process is building an image from definition   
+
+```
+docker image build --tag codegen .
+```
+
+### Generate code integrated spec
+
+The tool can generate to any output format supported by [openAPI-generator](https://openapi-generator.tech/docs/generators) project. The command syntax is following:
+```
+docker run --rm -it -v <your-output>:/opt/MEF/out codegen generate -c <codegen-config> -i ./api/<api-definition> -p payload_descriptions/ProductSpecDescription/<product-spec>
+```
+and the details for `generate` command can be displayed using:
+```
+docker run --rm -it -v out:/opt/MEF/out codegen help generate
+```
+which are:
+```
+NAME
+        openapi-generator-wrapper-cli generate - Generate code using
+        configuration.
+
+SYNOPSIS
+        openapi-generator-wrapper-cli generate
+                (-c <configuration file> | --config <configuration file>)
+                (-i <spec file> | --input-spec <spec file>)
+                [(-m <model to be augmented> | -model-name <model to be augmented>)]
+                [(-p <product specifications> | --product-spec <product specifications>)...]
+
+OPTIONS
+        -c <configuration file>, --config <configuration file>
+            Path to configuration file configuration file. It can be json or
+            yaml.If file is json, the content should have the format
+            {"optionKey":"optionValue", "optionKey1":"optionValue1"...}.If file
+            is yaml, the content should have the format optionKey:
+            optionValueSupported options can be different for each language. Run
+            config-help -g {generator name} command for language specific config
+            options.
+
+        -i <spec file>, --input-spec <spec file>
+            location of the OpenAPI spec, as URL or file (required)
+
+        -m <model to be augmented>, -model-name <model to be augmented>
+            Model which will be hosting product specific extensions (E.g.
+            ProductCharacteristics)
+
+        -p <product specifications>, --product-spec <product specifications>
+            sets of product specification you would like to integrate
+```
+
+The tool offers three example configurations for spring server, python client, and aggregated open API definition.
+So if you want to generate spring server side code binding for Product Offering Qualification management API together with all product specs available you can use following command:
+```
+docker run --rm -it -v out:/opt/MEF/out codegen generate -c configurations/spring-server-example.yaml -i ./api/Serviceability/MEF_api_productOfferingQualificationManagement_3.0.1.yaml -p payload_descriptions/ProductSpecDescription/MEF_UNISpec_v3.json -p 
+payload_descriptions/ProductSpecDescription/MEF_ELineSpec_v3.json
+```
+
+If you prefer you can attach to docker CLI and go in interactive mode:
+```
+docker run --rm -it -v out:/opt/MEF/out --entrypoint /bin/bash codegen
+```
+
+And then to replicate above codegen use:
+```
+root@3a2dfb6eef20:/opt/MEF# java -jar wrapper.jar generate -c configurations/spring-server-example.yaml -i ./api/Serviceability/MEF_api_productOfferingQualificationManagement_3.0.1.yaml -p payload_descriptions/ProductSpecDescription/MEF_UNISpec_v3.json -p payload_descriptions/ProductSpecDescription/MEF_ELineSpec_v3.json
+```
+
+
 ## Reference Implementations
 
 **1) LSO Sonata APIs (older version) implementation on Buyer side - contributed by Amdocs**
